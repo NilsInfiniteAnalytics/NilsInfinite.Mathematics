@@ -20,7 +20,7 @@ namespace NilsInfinite.Mathematics.Tests
         }
 
         [TestMethod]
-        public void TestCalculateBisectionMethodRootSearch()
+        public void CalculateBisectionMethodRootSearchReturnsCorrectValue()
         {
             // Arrange
             var func = new Func<double, double>(x => x * Math.Sin(x) - 1);
@@ -37,5 +37,22 @@ namespace NilsInfinite.Mathematics.Tests
             Assert.AreEqual(1.114157141, valueTuples.Last().MidPoint, 1e-6);
         }
 
+        [TestMethod]
+        public void CalculateRegulaFalsiRootSearchReturnsCorrectValue()
+        {
+            // Arrange
+            var func = new Func<double, double>(x => x * Math.Sin(x) - 1);
+            const double lowerBound = 0.0;
+            const double upperBound = 2.0;
+
+            // Act
+            var result = IterativeMethods.CalculateRegulaFalsiRootSearch(func, lowerBound, upperBound);
+
+            // Assert
+            Assert.IsNotNull(result);
+            var valueTuples = result as (double MidPoint, bool Converged)[] ?? result.ToArray();
+            Assert.IsTrue(valueTuples.Last().Converged);
+            Assert.AreEqual(1.114157141, valueTuples.Last().MidPoint, 1e-6);
+        }
     }
 }
