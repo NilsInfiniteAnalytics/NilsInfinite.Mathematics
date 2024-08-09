@@ -28,7 +28,8 @@ namespace NilsInfinite.Mathematics.Tests
             const double upperBound = 2.0;
 
             // Act
-            var result = IterativeMethods.CalculateBisectionMethodRootSearch(func, lowerBound, upperBound);
+            var result = IterativeMethods
+                .CalculateBisectionMethodRootSearch(func, lowerBound, upperBound);
 
             // Assert
             Assert.IsNotNull(result);
@@ -46,7 +47,8 @@ namespace NilsInfinite.Mathematics.Tests
             const double upperBound = 2.0;
 
             // Act
-            var result = IterativeMethods.CalculateRegulaFalsiRootSearch(func, lowerBound, upperBound);
+            var result = IterativeMethods
+                .CalculateRegulaFalsiRootSearch(func, lowerBound, upperBound);
 
             // Assert
             Assert.IsNotNull(result);

@@ -3,8 +3,6 @@
 namespace NilsInfinite.NumericalMethods;
 public static class IterativeMethods
 {
-    public static double Infinitesmal = 1e-6;
-
     public static double CalculateApproximationError(double exactRoot, double approxRoot)
     {
         return exactRoot - approxRoot;
@@ -35,7 +33,7 @@ public static class IterativeMethods
             newValue = function(currentValue);
             dF = newValue - currentValue;
             var delta = Math.Abs(dF);
-            var relativeError = 2 * delta / (Math.Abs(newValue) + Infinitesmal);
+            var relativeError = 2 * delta / (Math.Abs(newValue) + 1e-8);
         }
         var dX = currentValue - previousValue;
         var slope = dF / dX;
@@ -117,8 +115,9 @@ public static class IterativeMethods
             var changeInIterate = fUpper * (upperBound - lowerBound) / (fUpper - fLower);
             falsePosition = upperBound - changeInIterate;
             var fFalsePosition = errorFunc(falsePosition);
-            if (fFalsePosition == 0)
+            if (Math.Abs(changeInIterate) < residual && Math.Abs(fFalsePosition) < functionResidual)
             {
+                converged = true;
                 break;
             }
             if (fFalsePosition * fLower < 0)
@@ -131,13 +130,7 @@ public static class IterativeMethods
                 lowerBound = falsePosition;
                 fLower = fFalsePosition;
             }
-            if (Math.Abs(changeInIterate) < residual && Math.Abs(fFalsePosition) < functionResidual)
-            {
-                converged = true;
-                break;
-            }
             iteration++;
-
         } while (iteration <= maxIterations);
         if (iteration > maxIterations)
         {
