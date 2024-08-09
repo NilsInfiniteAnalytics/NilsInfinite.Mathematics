@@ -113,6 +113,7 @@ public static class IterativeMethods
         var converged = false;
         do
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var changeInIterate = fUpper * (upperBound - lowerBound) / (fUpper - fLower);
             falsePosition = upperBound - changeInIterate;
             var fFalsePosition = errorFunc(falsePosition);
