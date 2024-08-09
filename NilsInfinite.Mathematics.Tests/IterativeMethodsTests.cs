@@ -56,5 +56,25 @@ namespace NilsInfinite.Mathematics.Tests
             Assert.IsTrue(valueTuples.Last().Converged);
             Assert.AreEqual(1.114157141, valueTuples.Last().MidPoint, 1e-6);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void CalculateRegulaFalsiRootSearchFailsToConverge()
+        {
+            // Arrange
+            var func = new Func<double, double>(x => 1 / (x - 2));
+            const double lowerBound = 1.0;
+            const double upperBound = 7.0;
+
+            // Act
+            var result = IterativeMethods
+                .CalculateRegulaFalsiRootSearch(func, lowerBound, upperBound);
+
+            // Assert
+            Assert.IsNotNull(result);
+            var valueTuples = result as (double MidPoint, bool Converged)[] ?? result.ToArray();
+            Assert.IsTrue(valueTuples.Last().Converged);
+            Assert.AreEqual(1.114157141, valueTuples.Last().MidPoint, 1e-6);
+        }
     }
 }
