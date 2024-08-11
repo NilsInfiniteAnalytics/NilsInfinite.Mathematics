@@ -114,5 +114,89 @@ namespace NilsInfinite.Mathematics.Tests
             Assert.IsNotNull(result);
             Assert.IsTrue(Math.Abs(result.Last().NumberOfRoots - 2) < 1e-6);
         }
+
+        [TestMethod]
+        public void CalculateApproximateLocationOfRoots_NullFunction_ThrowsArgumentNullException()
+        {
+            // Arrange
+            Func<double, double> func = null;
+            const double lowerEndPoint = 0;
+            const double upperEndPoint = 1;
+            const int numberOfSubIntervals = 100;
+            const double functionResidual = 0.01;
+
+            // Act & Assert
+            Assert.ThrowsException<ArgumentNullException>(() =>
+            {
+                var result = IterativeMethods.CalculateApproximateLocationOfRoots(func, lowerEndPoint, upperEndPoint, numberOfSubIntervals, functionResidual);
+                foreach (var (numberOfRoots, approximateRootAbscissas) in result)
+                {
+                    // Do nothing, just iterate through the result
+                }
+            });
+        }
+
+        [TestMethod]
+        public void CalculateApproximateLocationOfRoots_InvalidInterval_ThrowsArgumentException()
+        {
+            // Arrange
+            Func<double, double> func = x => x * x - 4;
+            const double lowerEndPoint = 2;
+            const double upperEndPoint = 1;
+            const int numberOfSubIntervals = 100;
+            const double functionResidual = 0.01;
+
+            // Act & Assert
+            Assert.ThrowsException<ArgumentException>(() =>
+            {
+                var result = IterativeMethods.CalculateApproximateLocationOfRoots(func, lowerEndPoint, upperEndPoint, numberOfSubIntervals, functionResidual);
+                foreach (var (numberOfRoots, approximateRootAbscissas) in result)
+                {
+                    // Do nothing, just iterate through the result
+                }
+            });
+        }
+
+        [TestMethod]
+        public void CalculateApproximateLocationOfRoots_InvalidNumberOfSubIntervals_ThrowsArgumentException()
+        {
+            // Arrange
+            Func<double, double> func = x => x * x - 4;
+            const double lowerEndPoint = 1;
+            const double upperEndPoint = 2;
+            const int numberOfSubIntervals = 0;
+            const double functionResidual = 0.01;
+
+            // Act & Assert
+            Assert.ThrowsException<ArgumentException>(() =>
+            {
+                var result = IterativeMethods.CalculateApproximateLocationOfRoots(func, lowerEndPoint, upperEndPoint, numberOfSubIntervals, functionResidual);
+                foreach (var (numberOfRoots, approximateRootAbscissas) in result)
+                {
+                    // Do nothing, just iterate through the result
+                }
+            });
+        }
+
+        [TestMethod]
+        public void CalculateApproximateLocationOfRoots_InvalidFunctionResidual_ThrowsArgumentException()
+        {
+            // Arrange
+            Func<double, double> func = x => x * x - 4;
+            const double lowerEndPoint = 1;
+            const double upperEndPoint = 2;
+            const int numberOfSubIntervals = 100;
+            const double functionResidual = 0;
+
+            // Act & Assert
+            Assert.ThrowsException<ArgumentException>(() =>
+            {
+                var result = IterativeMethods.CalculateApproximateLocationOfRoots(func, lowerEndPoint, upperEndPoint, numberOfSubIntervals, functionResidual);
+                foreach (var (numberOfRoots, approximateRootAbscissas) in result)
+                {
+                    // Do nothing, just iterate through the result
+                }
+            });
+        }
     }
 }

@@ -170,29 +170,22 @@ public static class IterativeMethods
         {
             throw new ArgumentException("The function residual must be greater than zero");
         }
-
         var subIntervalWidth = (upperEndPoint - lowerEndPoint) / numberOfSubIntervals;
-
         var abscissas = new double[numberOfSubIntervals];
         var ordinates = new double[numberOfSubIntervals];
-
         var vectorSubIntervalWidth = new Vector<double>(subIntervalWidth);
         var vectorLowerEndPoint = new Vector<double>(lowerEndPoint);
-
         for (var i = 0; i < numberOfSubIntervals; i += Vector<double>.Count)
         {
             var vectorIndex = new Vector<double>(Enumerable.Range(i, Vector<double>.Count).Select(x => (double)x).ToArray());
             var vectorAbscissas = vectorLowerEndPoint + vectorIndex * vectorSubIntervalWidth;
-
             for (var j = 0; j < Vector<double>.Count; j++)
             {
                 abscissas[i + j] = vectorAbscissas[j];
                 ordinates[i + j] = func(abscissas[i + j]);
             }
         }
-
         var numberOfRoots = 0;
-
         for (var i = 1; i < numberOfSubIntervals - 1; i++)
         {
             double approximateRootAbscissas;
