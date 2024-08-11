@@ -96,5 +96,23 @@ namespace NilsInfinite.Mathematics.Tests
             Assert.IsTrue(valueTuples.Last().Converged);
             Assert.AreEqual(1.114157141, valueTuples.Last().MidPoint, 1e-6);
         }
+
+        [TestMethod]
+        public void CalculateApproximateLocationOfRootsReturnsCorrectValue()
+        {
+            // Arrange
+            var func = new Func<double, double>(x => x * x * x - x * x - x + 1);
+            const double lower = -1.2;
+            const double upper = 2.0;
+            const int numberOfSubIntervals = 1000;
+
+            // Act
+            var result = IterativeMethods
+                .CalculateApproximateLocationOfRoots(func, lower, upper, numberOfSubIntervals);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.IsTrue(Math.Abs(result.Last().NumberOfRoots - 2) < 1e-6);
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Numerics;
 
 namespace NilsInfinite.NumericalMethods;
 public static class IterativeMethods
@@ -13,7 +14,7 @@ public static class IterativeMethods
         return (exactRoot - approxRoot) / exactRoot;
     }
 
-    public static SequenceTypes CalculateFixedPointConvergenceDivergence(Func<double, double> function,
+    public static SequenceTypes CalculateFixedPointConvergenceDivergence(Func<double, double> errorFunc,
         double initialValue,
         double tolerance = 1e-6,
         int maxIterations = 200,
@@ -23,14 +24,14 @@ public static class IterativeMethods
         const double error = 1.0;
         var previousValue = initialValue;
         var currentValue = initialValue;
-        var newValue = function(currentValue);
+        var newValue = errorFunc(currentValue);
         var dF = newValue - currentValue;
         while (error >= tolerance && iteration <= maxIterations)
         {
             iteration++;
             previousValue = currentValue;
             currentValue = newValue;
-            newValue = function(currentValue);
+            newValue = errorFunc(currentValue);
             dF = newValue - currentValue;
             var delta = Math.Abs(dF);
             var relativeError = 2 * delta / (Math.Abs(newValue) + 1e-8);
@@ -40,7 +41,8 @@ public static class IterativeMethods
         return Math.Abs(slope) > 1 ? SequenceTypes.Diverging : SequenceTypes.Converging;
     }
 
-    public static IEnumerable<(double MidPoint, bool Converged)> CalculateBisectionMethodRootSearch(Func<double, double> errorFunc,
+    public static IEnumerable<(double MidPoint, bool Converged)> CalculateBisectionMethodRootSearch(
+        Func<double, double> errorFunc,
         double lowerBound,
         double upperBound,
         double residual = 1e-6,
@@ -88,7 +90,8 @@ public static class IterativeMethods
         yield return (midPoint, converged);
     }
 
-    public static IEnumerable<(double FalsePosition, bool Converged)> CalculateRegulaFalsiRootSearch(Func<double, double> errorFunc,
+    public static IEnumerable<(double FalsePosition, bool Converged)> CalculateRegulaFalsiRootSearch(
+        Func<double, double> errorFunc,
         double lowerBound,
         double upperBound,
         double residual = 1e-6,
@@ -137,6 +140,74 @@ public static class IterativeMethods
             throw new InvalidOperationException("The bisection method did not converge within the maximum number of iterations");
         }
         yield return (falsePosition, converged);
+    }
+
+    // ...
+
+    public static IEnumerable<(double NumberOfRoots, double ApproximateRootAbscissas)> CalculateApproximateLocationOfRoots(
+        Func<double, double> func,
+        double lowerEndPoint,
+        double upperEndPoint,
+        int numberOfSubIntervals = 100,
+        double functionResidual = 1e-2)
+    {
+        if (func == null)
+        {
+            throw new ArgumentNullException(nameof(func), "The function delegate cannot be null");
+        }
+
+        if (lowerEndPoint >= upperEndPoint)
+        {
+            throw new ArgumentException("The lower end point must be less than the upper end point");
+        }
+
+        if (numberOfSubIntervals <= 0)
+        {
+            throw new ArgumentException("The number of sub-intervals must be greater than zero");
+        }
+
+        if (functionResidual <= 0)
+        {
+            throw new ArgumentException("The function residual must be greater than zero");
+        }
+
+        var subIntervalWidth = (upperEndPoint - lowerEndPoint) / numberOfSubIntervals;
+
+        var abscissas = new double[numberOfSubIntervals];
+        var ordinates = new double[numberOfSubIntervals];
+
+        var vectorSubIntervalWidth = new Vector<double>(subIntervalWidth);
+        var vectorLowerEndPoint = new Vector<double>(lowerEndPoint);
+
+        for (var i = 0; i < numberOfSubIntervals; i += Vector<double>.Count)
+        {
+            var vectorIndex = new Vector<double>(Enumerable.Range(i, Vector<double>.Count).Select(x => (double)x).ToArray());
+            var vectorAbscissas = vectorLowerEndPoint + vectorIndex * vectorSubIntervalWidth;
+
+            for (var j = 0; j < Vector<double>.Count; j++)
+            {
+                abscissas[i + j] = vectorAbscissas[j];
+                ordinates[i + j] = func(abscissas[i + j]);
+            }
+        }
+
+        var numberOfRoots = 0;
+
+        for (var i = 1; i < numberOfSubIntervals - 1; i++)
+        {
+            double approximateRootAbscissas;
+            if (ordinates[i - 1] * ordinates[i] < 0)
+            {
+                numberOfRoots++;
+                approximateRootAbscissas = (abscissas[i - 1] + abscissas[i]) / 2;
+                yield return (numberOfRoots, approximateRootAbscissas);
+            }
+            var signChangeCheck = (ordinates[i] - ordinates[i - 1]) * (ordinates[i + 1] - ordinates[i]);
+            if (!(Math.Abs(ordinates[i]) < functionResidual) || !(signChangeCheck < 0)) continue;
+            numberOfRoots++;
+            approximateRootAbscissas = (abscissas[i - 1] + abscissas[i]) / 2;
+            yield return (numberOfRoots, approximateRootAbscissas);
+        }
     }
 
     public static double CalculateBisectionRootSearchMaximumIterations(double lowerBound, double upperBound, double residual = 1e-6)
