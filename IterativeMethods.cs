@@ -1,4 +1,4 @@
-﻿using System.Net;
+﻿using System.Reflection;
 using System.Numerics;
 
 namespace NilsInfinite.NumericalMethods;
@@ -14,7 +14,8 @@ public static class IterativeMethods
         return (exactRoot - approxRoot) / exactRoot;
     }
 
-    public static SequenceTypes CalculateFixedPointConvergenceDivergence(Func<double, double> errorFunc,
+    public static SequenceTypes CalculateFixedPointConvergenceDivergence(
+        Func<double, double> errorFunc,
         double initialValue,
         double tolerance = 1e-6,
         int maxIterations = 200,
@@ -41,7 +42,7 @@ public static class IterativeMethods
         return Math.Abs(slope) > 1 ? SequenceTypes.Diverging : SequenceTypes.Converging;
     }
 
-    public static IEnumerable<(double MidPoint, bool Converged)> CalculateBisectionMethodRootSearch(
+    public static IEnumerable<(double Abscissa, bool Converged)> CalculateBisectionMethodRootSearch(
         Func<double, double> errorFunc,
         double lowerBound,
         double upperBound,
@@ -90,7 +91,7 @@ public static class IterativeMethods
         yield return (midPoint, converged);
     }
 
-    public static IEnumerable<(double FalsePosition, bool Converged)> CalculateRegulaFalsiRootSearch(
+    public static IEnumerable<(double Abscissa, bool Converged)> CalculateRegulaFalsiRootSearch(
         Func<double, double> errorFunc,
         double lowerBound,
         double upperBound,
@@ -141,8 +142,6 @@ public static class IterativeMethods
         }
         yield return (falsePosition, converged);
     }
-
-    // ...
 
     public static IEnumerable<(double NumberOfRoots, double ApproximateRootAbscissas)> CalculateApproximateLocationOfRoots(
         Func<double, double> func,
@@ -201,6 +200,45 @@ public static class IterativeMethods
             approximateRootAbscissas = (abscissas[i - 1] + abscissas[i]) / 2;
             yield return (numberOfRoots, approximateRootAbscissas);
         }
+    }
+
+    public static IEnumerable<(double Abscissa, bool Converged)> CalculateNewtonRaphsonRootSearch(
+        Func<double, double> errorFunc,
+        Func<double, double> derivativeFunc,
+        double initialGuess,
+        double residual = 1e-6,
+        int maxIterations = 200,
+        CancellationToken cancellationToken = default)
+    {
+        var iteration = 0;
+        var converged = false;
+        var currentValue = initialGuess;
+        do
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var fValue = errorFunc(currentValue);
+            var fPrimeValue = derivativeFunc(currentValue);
+            if (fPrimeValue == 0)
+            {
+                throw new DivideByZeroException("The derivative of the function is zero at the current value",
+                    innerException: new Exception(MethodBase.GetCurrentMethod()?.Name));
+            }
+            var newValue = currentValue - fValue / fPrimeValue;
+            if (Math.Abs(newValue - currentValue) < residual)
+            {
+                converged = true;
+                break;
+            }
+            currentValue = newValue;
+            yield return (currentValue, converged);
+            iteration++;
+        } while (iteration <= maxIterations);
+        if (iteration > maxIterations)
+        {
+            throw new InvalidOperationException("The Newton-Raphson method did not converge within the maximum number of iterations",
+                innerException: new Exception(MethodBase.GetCurrentMethod()?.Name));
+        }
+        yield return (currentValue, converged);
     }
 
     public static double CalculateBisectionRootSearchMaximumIterations(double lowerBound, double upperBound, double residual = 1e-6)

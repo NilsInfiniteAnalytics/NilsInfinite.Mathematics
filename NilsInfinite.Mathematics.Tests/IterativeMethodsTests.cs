@@ -20,7 +20,7 @@ namespace NilsInfinite.Mathematics.Tests
         }
 
         [TestMethod]
-        public void CalculateBisectionMethodRootSearchReturnsCorrectValue()
+        public void CalculateBisectionMethodRootSearch_ReturnsCorrectValue()
         {
             // Arrange
             var func = new Func<double, double>(x => x * Math.Sin(x) - 1);
@@ -39,7 +39,7 @@ namespace NilsInfinite.Mathematics.Tests
         }
 
         [TestMethod]
-        public void CalculateRegulaFalsiRootSearchReturnsCorrectValue()
+        public void CalculateRegulaFalsiRootSearch_ReturnsCorrectValue()
         {
             // Arrange
             var func = new Func<double, double>(x => x * Math.Sin(x) - 1);
@@ -59,7 +59,7 @@ namespace NilsInfinite.Mathematics.Tests
 
         [TestMethod]
         [ExpectedException(typeof(InvalidOperationException))]
-        public void CalculateRegulaFalsiRootSearchThrowsInvalidOperationException()
+        public void CalculateRegulaFalsiRootSearch_ThrowsInvalidOperationException()
         {
             // Arrange
             var func = new Func<double, double>(x => 1 / (x - 2));
@@ -79,7 +79,7 @@ namespace NilsInfinite.Mathematics.Tests
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
-        public void CalculateRegulaFalsiRootSearchThrowsArgumentException()
+        public void CalculateRegulaFalsiRootSearch_ThrowsArgumentException()
         {
             // Arrange
             var func = new Func<double, double>(x => 1 / (x - 2));
@@ -98,7 +98,7 @@ namespace NilsInfinite.Mathematics.Tests
         }
 
         [TestMethod]
-        public void CalculateApproximateLocationOfRootsReturnsCorrectValue()
+        public void CalculateApproximateLocationOfRoots_ReturnsCorrectValue()
         {
             // Arrange
             var func = new Func<double, double>(x => x * x * x - x * x - x + 1);
@@ -195,6 +195,64 @@ namespace NilsInfinite.Mathematics.Tests
                 foreach (var (numberOfRoots, approximateRootAbscissas) in result)
                 {
                     // Do nothing, just iterate through the result
+                }
+            });
+        }
+
+        [TestMethod]
+        public void CalculateNewtonRaphsonRootSearch_ReturnsCorrectValue()
+        {
+            // Arrange
+            var func = new Func<double, double>(x => x * x - 4);
+            var derivative = new Func<double, double>(x => 2 * x);
+            const double initialValue = 1.0;
+
+            // Act
+            var result = IterativeMethods.CalculateNewtonRaphsonRootSearch(func, derivative, initialValue);
+
+            // Assert
+            Assert.IsNotNull(result);
+            var valueTuples = result as (double Abscissa, bool Converged)[] ?? result.ToArray();
+            Assert.IsTrue(valueTuples.Last().Converged);
+            Assert.AreEqual(2.0, valueTuples.Last().Abscissa, 1e-6);
+        }
+
+        [TestMethod]
+        public void CalculateNewtonRaphsonRootSearch_DivideByZeroException()
+        {
+            // Arrange
+            Func<double, double> errorFunc = x => 4;
+            Func<double, double> derivativeFunc = x => 0;
+            const double initialGuess = 2;
+            const double residual = 1e-6;
+            const int maxIterations = 200;
+
+            // Act & Assert
+            Assert.ThrowsException<DivideByZeroException>(() =>
+            {
+                foreach (var result in IterativeMethods.CalculateNewtonRaphsonRootSearch(errorFunc, derivativeFunc, initialGuess, residual, maxIterations))
+                {
+                    // Do nothing, just iterate through the results
+                }
+            });
+        }
+
+        [TestMethod]
+        public void CalculateNewtonRaphsonRootSearch_MaxIterationsExceeded()
+        {
+            // Arrange
+            Func<double, double> errorFunc = x => x * x - 4;
+            Func<double, double> derivativeFunc = x => 2 * x;
+            const double initialGuess = 10;
+            const double residual = 1e-6;
+            const int maxIterations = 5;
+
+            // Act & Assert
+            Assert.ThrowsException<InvalidOperationException>(() =>
+            {
+                foreach (var result in IterativeMethods.CalculateNewtonRaphsonRootSearch(errorFunc, derivativeFunc, initialGuess, residual, maxIterations))
+                {
+                    // Do nothing, just iterate through the results
                 }
             });
         }
