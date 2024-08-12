@@ -256,5 +256,51 @@ namespace NilsInfinite.Mathematics.Tests
                 }
             });
         }
+
+        [TestMethod]
+        public void CalculateSecantRootSearch_ReturnsCorrectValue()
+        {
+            // Arrange
+            Func<double, double> func = x => x * x - 2 * x - 1;
+            const double initialValue1 = 2.6;
+            const double initialValue2 = 2.5;
+
+            // Act
+            var result = IterativeMethods.CalculateSecantRootSearch(func, initialValue1, initialValue2);
+
+            // Assert
+            Assert.IsNotNull(result);
+            var valueTuples = result as (double Abscissa, bool Converged)[] ?? result.ToArray();
+            Assert.IsTrue(valueTuples.Last().Converged);
+            Assert.AreEqual(2.41421356, valueTuples.Last().Abscissa, 1e-6);
+        }
+
+        [TestMethod]
+        public void CalculateSecantRootSearch_ThrowsDivideByZeroException()
+        {
+            // Arrange
+            Func<double, double> func = x => x * x - 4;
+            const double initialValue1 = 2;
+            const double initialValue2 = 2;
+
+            // Act & Assert
+            Assert.ThrowsException<DivideByZeroException>(() =>
+                IterativeMethods.CalculateSecantRootSearch(func, initialValue1, initialValue2).ToList());
+        }
+
+        [TestMethod]
+        public void CalculateSecantRootSearch_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            Func<double, double> func = x => x * x - 2 * x - 1;
+            const double initialValue1 = 2.6;
+            const double initialValue2 = 2.5;
+            const double residual = 1e-6;
+            const int maxIterations = 1;
+
+            // Act & Assert
+            Assert.ThrowsException<InvalidOperationException>(() =>
+                IterativeMethods.CalculateSecantRootSearch(func, initialValue1, initialValue2, residual, maxIterations).ToList());
+        }
     }
 }

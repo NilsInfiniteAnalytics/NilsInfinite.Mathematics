@@ -241,7 +241,51 @@ public static class IterativeMethods
         yield return (currentValue, converged);
     }
 
-    public static double CalculateBisectionRootSearchMaximumIterations(double lowerBound, double upperBound, double residual = 1e-6)
+    public static IEnumerable<(double Abscissa, bool Converged)> CalculateSecantRootSearch(
+        Func<double, double> func,
+        double initialValue1,
+        double initialValue2,
+        double residual = 1e-6,
+        int maxIterations = 200,
+        CancellationToken cancellationToken = default)
+    {
+        var iteration = 0;
+        var converged = false;
+        var previousValue = initialValue1;
+        var currentValue = initialValue2;
+        do
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var fPreviousValue = func(previousValue);
+            var fCurrentValue = func(currentValue);
+            if (fCurrentValue - fPreviousValue == 0)
+            {
+                throw new DivideByZeroException("The difference between the current and previous values is zero",
+                    innerException: new Exception(MethodBase.GetCurrentMethod()?.Name));
+            }
+            var newValue = currentValue - fCurrentValue * ((currentValue - previousValue) / (fCurrentValue - fPreviousValue));
+            if (Math.Abs(newValue - currentValue) < residual)
+            {
+                converged = true;
+                break;
+            }
+            previousValue = currentValue;
+            currentValue = newValue;
+            yield return (currentValue, converged);
+            iteration++;
+        } while (iteration <= maxIterations);
+        if (iteration > maxIterations)
+        {
+            throw new InvalidOperationException("The secant method did not converge within the maximum number of iterations",
+                innerException: new Exception(MethodBase.GetCurrentMethod()?.Name));
+        }
+        yield return (currentValue, converged);
+    }
+
+    public static double CalculateBisectionRootSearchMaximumIterations(
+        double lowerBound,
+        double upperBound,
+        double residual = 1e-6)
     {
         return Math.Ceiling((Math.Log(upperBound - lowerBound) - Math.Log(residual)) / Math.Log(2));
     }
