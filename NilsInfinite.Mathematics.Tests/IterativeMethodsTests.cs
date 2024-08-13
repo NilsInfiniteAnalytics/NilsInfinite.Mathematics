@@ -347,6 +347,29 @@ public class IterativeMethodsTests
 
         // Act & Assert
         Assert.ThrowsException<InvalidOperationException>(() =>
-            IterativeMethods.CalculateMullersRootSearch(func, initialValue1, initialValue2, initialValue3, maxIterations: maxIterations).ToList());
+            IterativeMethods.CalculateMullersRootSearch(
+                func, 
+                initialValue1, 
+                initialValue2, 
+                initialValue3, 
+                maxIterations: maxIterations).ToList());
+    }
+
+    [TestMethod]
+    public void FindRootAsync_ShouldConverge()
+    {
+        // Arrange
+        Func<double, double> func = x => x * x - 4;
+        const double lowerBound = 0;
+        const double upperBound = 5;
+
+        // Act
+        var result = IterativeMethods
+            .FindRootAsync(func, lowerBound, upperBound, residual: 1e-10)
+            .GetAwaiter()
+            .GetResult();
+
+        // Assert
+        Assert.IsTrue(result.Converged);
     }
 }

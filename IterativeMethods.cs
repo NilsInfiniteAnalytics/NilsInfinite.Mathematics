@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Numerics;
+using System.Threading;
 
 namespace NilsInfinite.NumericalMethods;
 public static class IterativeMethods
@@ -300,16 +301,16 @@ public static class IterativeMethods
     {
         var iteration = 0;
         var converged = false;
-        var fAbscissa0 = func(abscissa0);
-        var fAbscissa1 = func(abscissa1);
-        var fAbscissa2 = func(abscissa2);
+        var ordinate0 = func(abscissa0);
+        var ordinate1 = func(abscissa1);
+        var ordinate2 = func(abscissa2);
         do
         {
             cancellationToken.ThrowIfCancellationRequested();
             var abscissaDelta0 = abscissa0 - abscissa2;
             var abscissaDelta1 = abscissa1 - abscissa2;
-            var linearSystemEquivalent0 = fAbscissa0 - fAbscissa2;
-            var linearSystemEquivalent1 = fAbscissa1 - fAbscissa2;
+            var linearSystemEquivalent0 = ordinate0 - ordinate2;
+            var linearSystemEquivalent1 = ordinate1 - ordinate2;
             var determinant = abscissaDelta0 * abscissaDelta1 * (abscissaDelta0 - abscissaDelta1);
             if (determinant == 0)
             {
@@ -318,7 +319,7 @@ public static class IterativeMethods
             }
             var a = (linearSystemEquivalent0 * abscissaDelta1 - linearSystemEquivalent1 * abscissaDelta0) / determinant;
             var b = (linearSystemEquivalent1 * abscissaDelta0 * abscissaDelta0 - linearSystemEquivalent0 * abscissaDelta1 * abscissaDelta1) / determinant;
-            var c = fAbscissa2;
+            var c = ordinate2;
             var discriminant = b * b > 4 * a * c ? Math.Sqrt(b * b - 4 * a * c) : 0.0;
             if (b < 0.0)
             {
@@ -329,25 +330,25 @@ public static class IterativeMethods
             if (Math.Abs(abscissa3 - abscissa1) < Math.Abs(abscissa3 - abscissa0))
             {
                 var temp1 = abscissa1;
-                var fTemp1 = fAbscissa1;
+                var fTemp1 = ordinate1;
                 abscissa1 = abscissa0;
                 abscissa0 = temp1;
-                fAbscissa1 = fAbscissa0;
-                fAbscissa0 = fTemp1;
+                ordinate1 = ordinate0;
+                ordinate0 = fTemp1;
             }
             if (Math.Abs(abscissa3 - abscissa2) < Math.Abs(abscissa3 - abscissa1))
             {
                 var temp2 = abscissa2;
-                var fTemp2 = fAbscissa2;
+                var fTemp2 = ordinate2;
                 abscissa2 = abscissa1;
                 abscissa1 = temp2;
-                fAbscissa2 = fAbscissa1;
-                fAbscissa1 = fTemp2;
+                ordinate2 = ordinate1;
+                ordinate1 = fTemp2;
             }
             abscissa2 = abscissa3;
-            fAbscissa2 = func(abscissa2);
+            ordinate2 = func(abscissa2);
             var relativeError = (2 * Math.Abs(z)) / (Math.Abs(abscissa2) + 1e-8);
-            if (relativeError < residual && Math.Abs(fAbscissa2) < functionResidual)
+            if (relativeError < residual && Math.Abs(ordinate2) < functionResidual)
             {
                 converged = true;
                 break;
@@ -369,5 +370,59 @@ public static class IterativeMethods
         double residual = 1e-6)
     {
         return Math.Ceiling((Math.Log(upperBound - lowerBound) - Math.Log(residual)) / Math.Log(2));
+    }
+
+    public static async Task<(double Abscissa, bool Converged)> FindRootAsync(
+        Func<double, double> func,
+        double lowerBound,
+        double upperBound,
+        Func<double, double>? derivativeFunc = null,
+        double residual = 1e-6,
+        double functionResidual = 1e-6,
+        int maxIterations = 200,
+        CancellationToken cancellationToken = default)
+    {
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var methods = new List<Func<Task<(double Abscissa, bool Converged)>>>
+        {
+            () => RunMethodAsync(CalculateBisectionMethodRootSearch(func, lowerBound, upperBound, residual, cts.Token), cts.Token),
+            () => RunMethodAsync(CalculateRegulaFalsiRootSearch(func, lowerBound, upperBound, residual, residual, maxIterations, cts.Token), cts.Token),
+            () => RunMethodAsync(CalculateSecantRootSearch(func, lowerBound, upperBound, residual, maxIterations, cts.Token), cts.Token),
+            () => RunMethodAsync(CalculateMullersRootSearch(func, lowerBound, (lowerBound + upperBound) / 2, upperBound, residual, residual, maxIterations, cts.Token), cts.Token),
+        };
+        if (derivativeFunc != null)
+        {
+            methods.Add(() => RunMethodAsync(CalculateNewtonRaphsonRootSearch(func, derivativeFunc, lowerBound, residual, maxIterations, cts.Token), cts.Token));
+        }
+        var tasks = methods.Select(method => method()).ToList();
+        try
+        {
+            var completedTask = await Task.WhenAny(tasks);
+            var result = await completedTask;
+            if (!result.Converged) throw new InvalidOperationException("No method converged.");
+            await cts.CancelAsync();
+            return result;
+
+        }
+        finally
+        {
+            cts.Dispose();
+        }
+    }
+
+    private static async Task<(double Abscissa, bool Converged)> RunMethodAsync(
+        IEnumerable<(double Abscissa, bool Converged)> method,
+        CancellationToken cancellationToken)
+    {
+        foreach (var result in method)
+        {
+            if (result.Converged)
+            {
+                return result;
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+            await Task.Yield();
+        }
+        return (double.NaN, false);
     }
 }

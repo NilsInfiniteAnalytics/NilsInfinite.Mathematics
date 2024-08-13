@@ -1,15 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="NilsInfinite.Mathematics.Tests\**" />
-    <EmbeddedResource Remove="NilsInfinite.Mathematics.Tests\**" />
-    <None Remove="NilsInfinite.Mathematics.Tests\**" />
-  </ItemGroup>
-
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<LanguageVersion>latest</LanguageVersion>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<ItemGroup>
+		<Compile Remove="NilsInfinite.Mathematics.Tests\**" />
+		<EmbeddedResource Remove="NilsInfinite.Mathematics.Tests\**" />
+		<None Remove="NilsInfinite.Mathematics.Tests\**" />
+	</ItemGroup>
 </Project>
