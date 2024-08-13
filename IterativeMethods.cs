@@ -203,20 +203,20 @@ public static class IterativeMethods
     }
 
     public static IEnumerable<(double Abscissa, bool Converged)> CalculateNewtonRaphsonRootSearch(
-        Func<double, double> errorFunc,
+        Func<double, double> func,
         Func<double, double> derivativeFunc,
-        double initialGuess,
+        double initialValue,
         double residual = 1e-6,
         int maxIterations = 200,
         CancellationToken cancellationToken = default)
     {
         var iteration = 0;
         var converged = false;
-        var currentValue = initialGuess;
+        var currentValue = initialValue;
         do
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var fValue = errorFunc(currentValue);
+            var fValue = func(currentValue);
             var fPrimeValue = derivativeFunc(currentValue);
             if (fPrimeValue == 0)
             {
@@ -280,6 +280,87 @@ public static class IterativeMethods
                 innerException: new Exception(MethodBase.GetCurrentMethod()?.Name));
         }
         yield return (currentValue, converged);
+    }
+
+    /// <summary>
+    /// Perform Muller's method to find the root of a function using three distinct initial abscissas.
+    /// </summary>
+    /// <returns>Streams an enumerable of tuples containing the iterate and convergence status</returns>
+    /// <exception cref="DivideByZeroException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    public static IEnumerable<(double Abscissa, bool Converged)> CalculateMullersRootSearch(
+        Func<double, double> func,
+        double abscissa0,
+        double abscissa1,
+        double abscissa2,
+        double residual = 1e-6,
+        double functionResidual = 1e-6,
+        int maxIterations = 200,
+        CancellationToken cancellationToken = default)
+    {
+        var iteration = 0;
+        var converged = false;
+        var fAbscissa0 = func(abscissa0);
+        var fAbscissa1 = func(abscissa1);
+        var fAbscissa2 = func(abscissa2);
+        do
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var abscissaDelta0 = abscissa0 - abscissa2;
+            var abscissaDelta1 = abscissa1 - abscissa2;
+            var linearSystemEquivalent0 = fAbscissa0 - fAbscissa2;
+            var linearSystemEquivalent1 = fAbscissa1 - fAbscissa2;
+            var determinant = abscissaDelta0 * abscissaDelta1 * (abscissaDelta0 - abscissaDelta1);
+            if (determinant == 0)
+            {
+                throw new DivideByZeroException("The determinant of the linear system is zero",
+                    innerException: new Exception(MethodBase.GetCurrentMethod()?.Name));
+            }
+            var a = (linearSystemEquivalent0 * abscissaDelta1 - linearSystemEquivalent1 * abscissaDelta0) / determinant;
+            var b = (linearSystemEquivalent1 * abscissaDelta0 * abscissaDelta0 - linearSystemEquivalent0 * abscissaDelta1 * abscissaDelta1) / determinant;
+            var c = fAbscissa2;
+            var discriminant = b * b > 4 * a * c ? Math.Sqrt(b * b - 4 * a * c) : 0.0;
+            if (b < 0.0)
+            {
+                discriminant = -discriminant;
+            }
+            var z = -2 * c / (b + discriminant);
+            var abscissa3 = abscissa2 + z;
+            if (Math.Abs(abscissa3 - abscissa1) < Math.Abs(abscissa3 - abscissa0))
+            {
+                var temp1 = abscissa1;
+                var fTemp1 = fAbscissa1;
+                abscissa1 = abscissa0;
+                abscissa0 = temp1;
+                fAbscissa1 = fAbscissa0;
+                fAbscissa0 = fTemp1;
+            }
+            if (Math.Abs(abscissa3 - abscissa2) < Math.Abs(abscissa3 - abscissa1))
+            {
+                var temp2 = abscissa2;
+                var fTemp2 = fAbscissa2;
+                abscissa2 = abscissa1;
+                abscissa1 = temp2;
+                fAbscissa2 = fAbscissa1;
+                fAbscissa1 = fTemp2;
+            }
+            abscissa2 = abscissa3;
+            fAbscissa2 = func(abscissa2);
+            var relativeError = (2 * Math.Abs(z)) / (Math.Abs(abscissa2) + 1e-8);
+            if (relativeError < residual && Math.Abs(fAbscissa2) < functionResidual)
+            {
+                converged = true;
+                break;
+            }
+            yield return (abscissa2, converged);
+            iteration++;
+        } while (iteration <= maxIterations);
+        if (iteration > maxIterations)
+        {
+            throw new InvalidOperationException("Muller's method did not converge within the maximum number of iterations",
+                innerException: new Exception(MethodBase.GetCurrentMethod()?.Name));
+        }
+        yield return (abscissa2, converged);
     }
 
     public static double CalculateBisectionRootSearchMaximumIterations(

@@ -302,5 +302,53 @@ namespace NilsInfinite.Mathematics.Tests
             Assert.ThrowsException<InvalidOperationException>(() =>
                 IterativeMethods.CalculateSecantRootSearch(func, initialValue1, initialValue2, residual, maxIterations).ToList());
         }
+
+        [TestMethod]
+        public void CalculateMullersRootSearch_ReturnsCorrectValue()
+        {
+            // Arrange
+            Func<double, double> func = x => x * x * x - 3 * x + 2;
+            const double initialValue1 = -2.6;
+            const double initialValue2 = -2.5;
+            const double initialValue3 = -2.4;
+
+            // Act
+            var result = IterativeMethods.CalculateMullersRootSearch(func, initialValue1, initialValue2, initialValue3);
+
+            // Assert
+            Assert.IsNotNull(result);
+            var valueTuples = result as (double Abscissa, bool Converged)[] ?? result.ToArray();
+            Assert.IsTrue(valueTuples.Last().Converged);
+            Assert.AreEqual(-2.0, valueTuples.Last().Abscissa, 1e-6);
+        }
+
+        [TestMethod]
+        public void CalculateMullersRootSearch_ThrowsDivideByZeroException()
+        {
+            // Arrange
+            Func<double, double> func = x => x * x - 4;
+            const double initialValue1 = 2;
+            const double initialValue2 = 2;
+            const double initialValue3 = 2;
+
+            // Act & Assert
+            Assert.ThrowsException<DivideByZeroException>(() =>
+                IterativeMethods.CalculateMullersRootSearch(func, initialValue1, initialValue2, initialValue3).ToList());
+        }
+
+        [TestMethod]
+        public void CalculateMullersRootSearch_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            Func<double, double> func = x => x * x * x - 3 * x + 2;
+            const double initialValue1 = -3.0;
+            const double initialValue2 = -2.5;
+            const double initialValue3 = -2.4;
+            const int maxIterations = 1;
+
+            // Act & Assert
+            Assert.ThrowsException<InvalidOperationException>(() =>
+                IterativeMethods.CalculateMullersRootSearch(func, initialValue1, initialValue2, initialValue3, maxIterations: maxIterations).ToList());
+        }
     }
 }
