@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using System.Numerics;
-using System.Threading;
 
 namespace NilsInfinite.NumericalMethods;
 public static class IterativeMethods

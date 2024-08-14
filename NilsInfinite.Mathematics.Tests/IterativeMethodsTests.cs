@@ -1,6 +1,7 @@
 using NilsInfinite.NumericalMethods;
 
 namespace NilsInfinite.Mathematics.Tests;
+
 [TestClass]
 public class IterativeMethodsTests
 {
